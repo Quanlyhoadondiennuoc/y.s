@@ -14,6 +14,7 @@
         body {
             font-family: 'Noto Sans JP', 'Inter', sans-serif;
             background-color: #f0f2f5;
+            font-size: 14px; /* Giảm cỡ chữ cơ bản */
         }
         /* Custom scrollbar */
         ::-webkit-scrollbar { width: 8px; }
@@ -34,6 +35,13 @@
         .toast.success { background-color: #28a745; }
         .toast.error { background-color: #dc3545; }
         .toast.warning { background-color: #ffc107; color: #212529; }
+        
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+        .transition-transform {
+            transition: transform 0.2s ease-in-out;
+        }
     </style>
 </head>
 
@@ -42,8 +50,8 @@
     <!-- Container chính -->
     <div id="app-container" class="min-h-screen p-4 sm:p-6 lg:p-8">
         <header class="mb-6">
-            <h1 class="text-3xl font-bold text-gray-800">光熱費請求管理</h1>
-            <p class="text-sm text-gray-500 mt-1">社員寮の光熱費を一元管理します。</p>
+            <h1 class="text-2xl font-bold text-gray-800">光熱費請求管理</h1>
+            <p class="text-xs text-gray-500 mt-1">社員寮の光熱費を一元管理します。</p>
             <p id="userIdDisplay" class="text-xs text-gray-400 mt-2"></p>
         </header>
 
@@ -71,46 +79,43 @@
     <!-- Modal xem lịch sử hóa đơn -->
     <div id="billHistoryModal" class="fixed inset-0 z-50 items-center justify-center hidden overflow-auto modal-backdrop">
         <div class="bg-white rounded-lg shadow-xl w-11/12 md:w-3/4 lg:w-2/3 p-6 m-4 modal overflow-y-auto">
-             <div class="flex justify-between items-center mb-4">
-                <h2 id="billHistoryModalTitle" class="text-2xl font-bold">請求履歴</h2>
+             <div class="flex justify-between items-center mb-4 pb-4 border-b">
+                <h2 id="billHistoryModalTitle" class="text-xl font-bold">請求履歴</h2>
                 <button id="closeBillHistoryModal" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
             </div>
-            <div class="max-h-[60vh] overflow-y-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">対象年月</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">種別</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">請求金額</th>
-                        </tr>
-                    </thead>
-                    <tbody id="billHistoryTableBody" class="bg-white divide-y divide-gray-200">
-                        <!-- Dữ liệu lịch sử sẽ được chèn vào đây -->
-                    </tbody>
-                </table>
+            <div id="billHistoryContainer" class="max-h-[60vh] overflow-y-auto space-y-2 p-1">
+                 <!-- Dữ liệu lịch sử sẽ được chèn vào đây -->
             </div>
         </div>
     </div>
     
-    <!-- Các modal khác (không thay đổi) -->
-    <div id="roomModal" class="fixed inset-0 z-50 items-center justify-center hidden overflow-auto modal-backdrop"><div class="bg-white rounded-lg shadow-xl w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 p-6 m-4 modal overflow-y-auto"><form id="roomForm"><input type="hidden" id="roomId"><h2 id="modalTitle" class="text-2xl font-bold mb-6"></h2><fieldset class="border p-4 rounded-lg mb-4"><legend class="text-lg font-semibold px-2">基本情報</legend><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="roomNumber" class="block text-sm font-medium text-gray-700">部屋番号</label><input type="text" id="roomNumber" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></div><div><label for="tenantName" class="block text-sm font-medium text-gray-700">使用者名</label><input type="text" id="tenantName" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></div><div><label for="phoneNumber" class="block text-sm font-medium text-gray-700">電話番号</label><input type="tel" id="phoneNumber" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></div></div></fieldset><fieldset class="border p-4 rounded-lg mb-4"><legend class="text-lg font-semibold px-2">インフラ情報</legend><div class="space-y-6"><div class="p-3 bg-gray-50 rounded-md"><h4 class="font-semibold text-yellow-500 mb-2">電気</h4><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"><div><label class="text-xs">お客様番号</label><input type="text" id="electricCustomerNumber" class="mt-1 w-full border-gray-300 rounded-md text-sm"></div><div><label class="text-xs">支払方法</label><select id="electricPaymentMethod" class="mt-1 w-full border-gray-300 rounded-md text-sm"><option value="コンビニ決済">コンビニ決済</option><option value="口座振替">口座振替</option></select></div><div><label class="text-xs">利用開始日</label><input type="date" id="electricStartDate" class="mt-1 w-full border-gray-300 rounded-md text-sm"></div><div><label class="text-xs">登録状況</label><input type="text" id="electricStatus" placeholder="例：手続き完了" class="mt-1 w-full border-gray-300 rounded-md text-sm"></div></div></div><div class="p-3 bg-gray-50 rounded-md"><h4 class="font-semibold text-red-500 mb-2">ガス</h4><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"><div><label class="text-xs">お客様番号</label><input type="text" id="gasCustomerNumber" class="mt-1 w-full border-gray-300 rounded-md text-sm"></div><div><label class="text-xs">支払方法</label><select id="gasPaymentMethod" class="mt-1 w-full border-gray-300 rounded-md text-sm"><option value="コンビニ決済">コンビニ決済</option><option value="口座振替">口座振替</option></select></div><div><label class="text-xs">利用開始日</label><input type="date" id="gasStartDate" class="mt-1 w-full border-gray-300 rounded-md text-sm"></div><div><label class="text-xs">登録状況</label><input type="text" id="gasStatus" class="mt-1 w-full border-gray-300 rounded-md text-sm"></div></div></div><div class="p-3 bg-gray-50 rounded-md"><h4 class="font-semibold text-blue-500 mb-2">水道</h4><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"><div><label class="text-xs">お客様番号</label><input type="text" id="waterCustomerNumber" class="mt-1 w-full border-gray-300 rounded-md text-sm"></div><div><label class="text-xs">支払方法</label><select id="waterPaymentMethod" class="mt-1 w-full border-gray-300 rounded-md text-sm"><option value="コンビニ決済">コンビニ決済</option><option value="口座振替">口座振替</option></select></div><div><label class="text-xs">利用開始日</label><input type="date" id="waterStartDate" class="mt-1 w-full border-gray-300 rounded-md text-sm"></div><div><label class="text-xs">登録状況</label><input type="text" id="waterStatus" class="mt-1 w-full border-gray-300 rounded-md text-sm"></div></div></div><div class="p-3 bg-gray-50 rounded-md"><h4 class="font-semibold text-green-500 mb-2">インターネット</h4><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"><div><label class="text-xs">お客様番号</label><input type="text" id="internetCustomerNumber" class="mt-1 w-full border-gray-300 rounded-md text-sm"></div><div><label class="text-xs">支払方法</label><select id="internetPaymentMethod" class="mt-1 w-full border-gray-300 rounded-md text-sm"><option value="コンビニ決済">コンビニ決済</option><option value="口座振替">口座振替</option></select></div><div><label class="text-xs">利用開始日</label><input type="date" id="internetStartDate" class="mt-1 w-full border-gray-300 rounded-md text-sm"></div><div><label class="text-xs">登録状況</label><input type="text" id="internetStatus" class="mt-1 w-full border-gray-300 rounded-md text-sm"></div></div></div></div></fieldset><fieldset class="border p-4 rounded-lg"><legend class="text-lg font-semibold px-2">ログイン情報メモ</legend><textarea id="loginNotes" rows="4" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="各システムのID、パスワードなどのメモにご利用ください。"></textarea></fieldset><div class="flex justify-end mt-6 space-x-3"><button type="button" id="cancelRoomModal" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition">キャンセル</button><button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition">保存</button></div></form></div></div>
-    <div id="billModal" class="fixed inset-0 z-50 items-center justify-center hidden overflow-auto modal-backdrop"><div class="bg-white rounded-lg shadow-xl w-11/12 md:w-1/2 lg:w-1/3 p-6 m-4 modal"><form id="billForm"><input type="hidden" id="billRoomId"><h2 class="text-2xl font-bold mb-2">請求書の追加</h2><p class="mb-6 text-gray-600">部屋番号: <span id="billModalRoomNumber" class="font-semibold"></span></p><div class="space-y-4"><div><label for="billUtilityType" class="block text-sm font-medium text-gray-700">種別</label><select id="billUtilityType" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"><option value="electric">電気</option><option value="gas">ガス</option><option value="water">水道</option><option value="internet">インターネット</option></select></div><div><label for="billMonth" class="block text-sm font-medium text-gray-700">対象年月</label><input type="month" id="billMonth" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></div><div><label for="billAmount" class="block text-sm font-medium text-gray-700">請求金額 (円)</label><input type="number" id="billAmount" required placeholder="例: 5000" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></div></div><div class="flex justify-end mt-6 space-x-3"><button type="button" id="cancelBillModal" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition">キャンセル</button><button type="submit" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition">登録</button></div></form></div></div>
+    <!-- Các modal khác (đã cập nhật) -->
+    <div id="roomModal" class="fixed inset-0 z-50 items-center justify-center hidden overflow-auto modal-backdrop"><div class="bg-white rounded-lg shadow-xl w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 p-6 m-4 modal overflow-y-auto"><form id="roomForm"><input type="hidden" id="roomId"><h2 id="modalTitle" class="text-xl font-bold mb-6"></h2><fieldset class="border p-4 rounded-lg mb-4"><legend class="text-base font-semibold px-2">基本情報</legend><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="roomNumber" class="block text-xs font-medium text-gray-700">部屋番号</label><input type="text" id="roomNumber" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></div><div><label for="tenantName" class="block text-xs font-medium text-gray-700">使用者名</label><input type="text" id="tenantName" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></div><div><label for="phoneNumber" class="block text-xs font-medium text-gray-700">電話番号</label><input type="tel" id="phoneNumber" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></div><div class="md:col-span-2"><label for="address" class="block text-xs font-medium text-gray-700">住所</label><input type="text" id="address" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></div></div></fieldset><fieldset class="border p-4 rounded-lg mb-4"><legend class="text-base font-semibold px-2">インフラ情報</legend><div class="space-y-6"><div class="p-3 bg-gray-50 rounded-md"><h4 class="font-semibold text-yellow-500 mb-2">電気</h4><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"><div><label class="text-xs">お客様番号</label><input type="text" id="electricCustomerNumber" class="mt-1 w-full border-gray-300 rounded-md text-xs"></div><div><label class="text-xs">支払方法</label><select id="electricPaymentMethod" class="mt-1 w-full border-gray-300 rounded-md text-xs"><option value="コンビニ決済">コンビニ決済</option><option value="口座振替">口座振替</option></select></div><div><label class="text-xs">利用開始日</label><input type="date" id="electricStartDate" class="mt-1 w-full border-gray-300 rounded-md text-xs"></div><div><label class="text-xs">登録状況</label><input type="text" id="electricStatus" placeholder="例：手続き完了" class="mt-1 w-full border-gray-300 rounded-md text-xs"></div></div></div><div class="p-3 bg-gray-50 rounded-md"><h4 class="font-semibold text-red-500 mb-2">ガス</h4><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"><div><label class="text-xs">お客様番号</label><input type="text" id="gasCustomerNumber" class="mt-1 w-full border-gray-300 rounded-md text-xs"></div><div><label class="text-xs">支払方法</label><select id="gasPaymentMethod" class="mt-1 w-full border-gray-300 rounded-md text-xs"><option value="コンビニ決済">コンビニ決済</option><option value="口座振替">口座振替</option></select></div><div><label class="text-xs">利用開始日</label><input type="date" id="gasStartDate" class="mt-1 w-full border-gray-300 rounded-md text-xs"></div><div><label class="text-xs">登録状況</label><input type="text" id="gasStatus" class="mt-1 w-full border-gray-300 rounded-md text-xs"></div></div></div><div class="p-3 bg-gray-50 rounded-md"><h4 class="font-semibold text-blue-500 mb-2">水道</h4><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"><div><label class="text-xs">お客様番号</label><input type="text" id="waterCustomerNumber" class="mt-1 w-full border-gray-300 rounded-md text-xs"></div><div><label class="text-xs">支払方法</label><select id="waterPaymentMethod" class="mt-1 w-full border-gray-300 rounded-md text-xs"><option value="コンビニ決済">コンビニ決済</option><option value="口座振替">口座振替</option></select></div><div><label class="text-xs">利用開始日</label><input type="date" id="waterStartDate" class="mt-1 w-full border-gray-300 rounded-md text-xs"></div><div><label class="text-xs">登録状況</label><input type="text" id="waterStatus" class="mt-1 w-full border-gray-300 rounded-md text-xs"></div></div></div><div class="p-3 bg-gray-50 rounded-md"><h4 class="font-semibold text-green-500 mb-2">インターネット</h4><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"><div><label class="text-xs">お客様番号</label><input type="text" id="internetCustomerNumber" class="mt-1 w-full border-gray-300 rounded-md text-xs"></div><div><label class="text-xs">支払方法</label><select id="internetPaymentMethod" class="mt-1 w-full border-gray-300 rounded-md text-xs"><option value="コンビニ決済">コンビニ決済</option><option value="口座振替">口座振替</option></select></div><div><label class="text-xs">利用開始日</label><input type="date" id="internetStartDate" class="mt-1 w-full border-gray-300 rounded-md text-xs"></div><div><label class="text-xs">登録状況</label><input type="text" id="internetStatus" class="mt-1 w-full border-gray-300 rounded-md text-xs"></div></div></div></div></fieldset><fieldset class="border p-4 rounded-lg"><legend class="text-base font-semibold px-2">ログイン情報メモ</legend><textarea id="loginNotes" rows="4" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="各システムのID、パスワードなどのメモにご利用ください。"></textarea></fieldset><div class="flex justify-end mt-6 space-x-3"><button type="button" id="cancelRoomModal" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition">キャンセル</button><button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition">保存</button></div></form></div></div>
+    <div id="billModal" class="fixed inset-0 z-50 items-center justify-center hidden overflow-auto modal-backdrop"><div class="bg-white rounded-lg shadow-xl w-11/12 md:w-1/2 lg:w-1/3 p-6 m-4 modal"><form id="billForm"><input type="hidden" id="billRoomId"><input type="hidden" id="billId"><h2 id="billModalTitle" class="text-xl font-bold mb-2">請求書の追加</h2><p class="mb-6 text-gray-600">部屋番号: <span id="billModalRoomNumber" class="font-semibold"></span></p><div class="space-y-4"><div><label for="billUtilityType" class="block text-xs font-medium text-gray-700">種別</label><select id="billUtilityType" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"><option value="electric">電気</option><option value="gas">ガス</option><option value="water">水道</option><option value="internet">インターネット</option></select></div><div><label for="billMonth" class="block text-xs font-medium text-gray-700">対象年月</label><input type="month" id="billMonth" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></div><div><label for="billAmount" class="block text-xs font-medium text-gray-700">請求金額 (円)</label><input type="number" id="billAmount" required placeholder="例: 5000" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></div><div><label for="billPeriod" class="block text-xs font-medium text-gray-700">請求期間</label><input type="text" id="billPeriod" placeholder="例: 2024/05/01 - 2024/05/31" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></div></div><div class="flex justify-end mt-6 space-x-3"><button type="button" id="cancelBillModal" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition">キャンセル</button><button type="submit" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition">登録</button></div></form></div></div>
     <div id="confirmDeleteModal" class="fixed inset-0 z-50 items-center justify-center hidden overflow-auto modal-backdrop"><div class="bg-white rounded-lg shadow-xl w-11/12 sm:w-1/3 p-6 m-4 modal"><h2 class="text-xl font-bold mb-4">確認</h2><p id="confirmDeleteMessage"></p><div class="flex justify-end mt-6 space-x-3"><button id="cancelDelete" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300">キャンセル</button><button id="confirmDelete" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700">削除</button></div></div></div>
     <div id="toast-container"></div>
 
     <script type="module">
         // --- Firebase Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, doc, getDoc, addDoc, setDoc, deleteDoc, onSnapshot, 
-            collection, query, where, getDocs, writeBatch, serverTimestamp 
+            collection, query, where, getDocs, writeBatch, serverTimestamp, updateDoc
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- CẤU HÌNH FIREBASE (QUAN TRỌNG) ---
+        // Đã dán cấu hình của bạn vào đây.
+        const firebaseConfig = {
+          apiKey: "AIzaSyDFfsZmlXD87LE37In1iUA0rezWfHa2Bgo",
+          authDomain: "quan-ly-hoa-don-dien-nuoc.firebaseapp.com",
+          projectId: "quan-ly-hoa-don-dien-nuoc",
+          storageBucket: "quan-ly-hoa-don-dien-nuoc.appspot.com",
+          messagingSenderId: "336770304005",
+          appId: "1:336770304005:web:496ae0775f7c39deac746c"
+        };
 
-        // --- Cấu hình và biến toàn cục ---
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
+        // --- Biến toàn cục ---
         let dataService; 
         let authReady = false;
         let allRoomsData = [], allBillsData = [];
@@ -121,10 +126,7 @@
         const userIdDisplay = document.getElementById('userIdDisplay');
         const addRoomBtn = document.getElementById('addRoomBtn');
         const exportExcelBtn = document.getElementById('exportExcelBtn');
-        const roomModal = document.getElementById('roomModal');
-        const billModal = document.getElementById('billModal');
         const billHistoryModal = document.getElementById('billHistoryModal');
-        const confirmDeleteModal = document.getElementById('confirmDeleteModal');
         const roomForm = document.getElementById('roomForm');
         const billForm = document.getElementById('billForm');
 
@@ -190,25 +192,26 @@
                 });
                 
                 const card = document.createElement('div');
-                card.className = 'bg-white rounded-lg shadow-lg p-5 flex flex-col justify-between transition-shadow hover:shadow-xl';
+                card.className = 'bg-white rounded-lg shadow-lg p-4 flex flex-col justify-between transition-shadow hover:shadow-xl';
                 card.innerHTML = `
                     <div>
-                        <div class="flex justify-between items-start mb-4">
+                        <div class="flex justify-between items-start mb-3">
                             <div>
-                                <h3 class="text-xl font-bold text-blue-800">${room.roomNumber}</h3>
-                                <p class="text-gray-600">${room.tenantName || '使用者未設定'}</p>
-                                <p class="text-sm text-gray-500 mt-1">${room.phoneNumber || '電話番号未設定'}</p>
+                                <h3 class="text-lg font-bold text-blue-800">${room.roomNumber}</h3>
+                                <p class="text-sm text-gray-600">${room.tenantName || '使用者未設定'}</p>
+                                <p class="text-xs text-gray-500 mt-1"><i class="fas fa-phone-alt fa-fw mr-1"></i>${room.phoneNumber || '未設定'}</p>
+                                <p class="text-xs text-gray-500 mt-1"><i class="fas fa-map-marker-alt fa-fw mr-1"></i>${room.address || '住所未設定'}</p>
                             </div>
                             <div class="flex space-x-2">
                                 <button data-id="${room.id}" class="edit-room-btn text-gray-500 hover:text-blue-600 transition"><i class="fas fa-edit"></i></button>
                                 <button data-id="${room.id}" data-name="${room.roomNumber}" class="delete-room-btn text-gray-500 hover:text-red-600 transition"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
-                        <div class="space-y-3 mb-4 text-sm">${createUtilityRow('electric', '電気', 'yellow', room.utilities.electric, latestBills.get('electric'))}${createUtilityRow('gas', 'ガス', 'red', room.utilities.gas, latestBills.get('gas'))}${createUtilityRow('water', '水道', 'blue', room.utilities.water, latestBills.get('water'))}${createUtilityRow('internet', 'インターネット', 'green', room.utilities.internet, latestBills.get('internet'))}</div>
+                        <div class="space-y-2 mb-3 text-xs">${createUtilityRow('electric', '電気', 'yellow', room.utilities.electric, latestBills.get('electric'))}${createUtilityRow('gas', 'ガス', 'red', room.utilities.gas, latestBills.get('gas'))}${createUtilityRow('water', '水道', 'blue', room.utilities.water, latestBills.get('water'))}${createUtilityRow('internet', 'インターネット', 'green', room.utilities.internet, latestBills.get('internet'))}</div>
                     </div>
-                    <div class="mt-4 pt-4 border-t border-gray-200 flex space-x-2">
-                        <button data-id="${room.id}" data-name="${room.roomNumber}" class="add-bill-btn w-1/2 bg-green-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-600 transition">請求書追加</button>
-                        <button data-id="${room.id}" data-name="${room.roomNumber}" class="view-history-btn w-1/2 bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-md hover:bg-gray-300 transition">請求履歴</button>
+                    <div class="mt-3 pt-3 border-t border-gray-200 flex space-x-2">
+                        <button data-id="${room.id}" data-name="${room.roomNumber}" class="add-bill-btn w-1/2 bg-green-500 text-white font-semibold py-2 px-3 rounded-md hover:bg-green-600 transition text-xs">請求書追加</button>
+                        <button data-id="${room.id}" data-name="${room.roomNumber}" class="view-history-btn w-1/2 bg-gray-200 text-gray-800 font-semibold py-2 px-3 rounded-md hover:bg-gray-300 transition text-xs">請求履歴</button>
                     </div>`;
                 roomList.appendChild(card);
             });
@@ -218,7 +221,7 @@
         }
 
         function createUtilityRow(type, name, color, utilityInfo, latestBill) {
-             const billInfo = latestBill ? `${latestBill.year}年${latestBill.month}月: ${latestBill.amount.toLocaleString()}円` : '<span class="text-gray-400">請求書未登録</span>';
+             const billInfo = latestBill ? `${latestBill.year}/${String(latestBill.month).padStart(2, '0')}: ${latestBill.amount.toLocaleString()}円` : '<span class="text-gray-400">請求書未登録</span>';
              const iconMap = { electric: 'fa-bolt', gas: 'fa-fire-flame-simple', water: 'fa-tint', internet: 'fa-wifi' };
              return `<div class="flex items-center justify-between"><div class="flex items-center"><i class="fas ${iconMap[type]} text-${color}-500 w-5 text-center"></i><span class="font-medium ml-2">${name}</span><span class="text-xs text-gray-500 ml-3">( ${utilityInfo?.paymentMethod || '未設定'} )</span></div><div class="text-right">${billInfo}</div></div>`;
         }
@@ -230,15 +233,15 @@
              const currentYear = today.getFullYear();
              const currentMonth = today.getMonth() + 1;
              const currentDay = today.getDate();
-             if (currentDay < 28) return;
+             if (currentDay < 30) return;
              rooms.forEach(room => {
                  const roomBills = billsByRoom.get(room.id) || [];
                  ['electric', 'gas', 'water', 'internet'].forEach(type => {
                      const hasBill = roomBills.some(b => b.utilityType === type && b.year === currentYear && b.month === currentMonth);
                      if (!hasBill) {
                          const alertEl = document.createElement('div');
-                         alertEl.className = 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md';
-                         alertEl.innerHTML = `<p class="font-bold">注意</p><p>部屋「${room.roomNumber}」の${currentYear}年${currentMonth}月分の${translateUtility(type)}の請求書がまだ入力されていません。</p>`;
+                         alertEl.className = 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md text-sm';
+                         alertEl.innerHTML = `<p class="font-bold">注意</p><p>部屋「${room.roomNumber}」の${currentYear}/${currentMonth}分の${translateUtility(type)}の請求書がまだ入力されていません。</p>`;
                          alertContainer.appendChild(alertEl);
                      }
                  });
@@ -251,25 +254,51 @@
             _getBills: () => JSON.parse(localStorage.getItem('bills') || '[]'),
             _saveRooms: (rooms) => localStorage.setItem('rooms', JSON.stringify(rooms)),
             _saveBills: (bills) => localStorage.setItem('bills', JSON.stringify(bills)),
-            async init() {
-                showToast('オフラインモードで実行中。データは同期されません。', 'warning');
-                userIdDisplay.textContent = 'オフラインモード';
-                this.loadData();
-            },
+            async init() { showToast('オフラインモードで実行中。データは同期されません。', 'warning'); userIdDisplay.textContent = 'オフラインモード'; this.loadData(); },
             loadData() { renderUI(this._getRooms(), this._getBills()); },
             async getRoom(id) { return this._getRooms().find(r => r.id === id); },
             async saveRoom(roomData) { let rooms = this._getRooms(); if (roomData.id) { rooms = rooms.map(r => r.id === roomData.id ? { ...r, ...roomData } : r); } else { roomData.id = `local_${Date.now()}`; rooms.push(roomData); } this._saveRooms(rooms); this.loadData(); },
             async deleteRoom(roomId) { let rooms = this._getRooms().filter(r => r.id !== roomId); let bills = this._getBills().filter(b => b.roomId !== roomId); this._saveRooms(rooms); this._saveBills(bills); this.loadData(); },
-            async addBill(billData) { const bills = this._getBills(); const hasDuplicate = bills.some(b => b.roomId === billData.roomId && b.utilityType === billData.utilityType && b.year === billData.year && b.month === billData.month); if (hasDuplicate) { showToast(`この部屋の${billData.year}年${billData.month}月分の${translateUtility(billData.utilityType)}請求書は既に入力されています。`, 'warning'); return; } billData.id = `local_bill_${Date.now()}`; bills.push(billData); this._saveBills(bills); this.loadData(); showToast('請求書を登録しました。'); closeModal(billModal); }
+            async getBill(billId) { return this._getBills().find(b => b.id === billId); },
+            async saveBill(billData) { 
+                let bills = this._getBills();
+                if (billData.id) { // Update
+                     bills = bills.map(b => b.id === billData.id ? { ...b, ...billData } : b);
+                } else { // Add new
+                    const hasDuplicate = bills.some(b => b.roomId === billData.roomId && b.utilityType === billData.utilityType && b.year === billData.year && b.month === billData.month);
+                    if (hasDuplicate) { showToast(`この部屋の${billData.year}/${String(billData.month).padStart(2, '0')}分の${translateUtility(billData.utilityType)}請求書は既に入力されています。`, 'warning'); return; }
+                    billData.id = `local_bill_${Date.now()}`; 
+                    bills.push(billData);
+                }
+                this._saveBills(bills);
+                this.loadData();
+                showToast(billData.id ? '請求書を更新しました。' : '請求書を登録しました。');
+                closeModal(document.getElementById('billModal'));
+            }
         };
         const firestoreService = {
             db: null, auth: null, userId: null, unsubscribeRooms: null, unsubscribeBills: null,
-            async init() { try { const app = initializeApp(firebaseConfig); this.db = getFirestore(app); this.auth = getAuth(app); await setPersistence(this.auth, browserLocalPersistence); return new Promise((resolve, reject) => { onAuthStateChanged(this.auth, async (user) => { if (user) { this.userId = user.uid; userIdDisplay.textContent = `UserID: ${this.userId}`; this.loadData(); resolve(); } else { try { if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { await signInWithCustomToken(this.auth, __initial_auth_token); } else { await signInAnonymously(this.auth); } } catch (error) { console.error("Authentication failed:", error); reject(error); } } }); }); } catch (error) { console.error("Firestore initialization failed:", error); throw error; } },
-            loadData() { let roomsData = [], billsData = []; const update = () => renderUI(roomsData, billsData); const roomsQuery = query(collection(this.db, `artifacts/${appId}/users/${this.userId}/rooms`)); if (this.unsubscribeRooms) this.unsubscribeRooms(); this.unsubscribeRooms = onSnapshot(roomsQuery, (snapshot) => { roomsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); update(); }, (error) => console.error("Error fetching rooms: ", error)); const billsQuery = query(collection(this.db, `artifacts/${appId}/users/${this.userId}/bills`)); if (this.unsubscribeBills) this.unsubscribeBills(); this.unsubscribeBills = onSnapshot(billsQuery, (snapshot) => { billsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); update(); }, (error) => console.error("Error fetching bills: ", error)); },
-            async getRoom(id) { const docRef = doc(this.db, `artifacts/${appId}/users/${this.userId}/rooms`, id); const docSnap = await getDoc(docRef); return docSnap.exists() ? docSnap.data() : null; },
-            async saveRoom(roomData) { const collectionRef = collection(this.db, `artifacts/${appId}/users/${this.userId}/rooms`); if (roomData.id) { const docRef = doc(collectionRef, roomData.id); await setDoc(docRef, { ...roomData, updatedAt: serverTimestamp() }, { merge: true }); } else { await addDoc(collectionRef, { ...roomData, createdAt: serverTimestamp() }); } },
-            async deleteRoom(roomId) { const batch = writeBatch(this.db); const billsQuery = query(collection(this.db, `artifacts/${appId}/users/${this.userId}/bills`), where("roomId", "==", roomId)); const billsSnapshot = await getDocs(billsQuery); billsSnapshot.forEach(doc => batch.delete(doc.ref)); const roomRef = doc(this.db, `artifacts/${appId}/users/${this.userId}/rooms`, roomId); batch.delete(roomRef); await batch.commit(); },
-            async addBill(billData) { const billsRef = collection(this.db, `artifacts/${appId}/users/${this.userId}/bills`); const q = query(billsRef, where("roomId", "==", billData.roomId), where("utilityType", "==", billData.utilityType), where("year", "==", billData.year), where("month", "==", billData.month)); const querySnapshot = await getDocs(q); if (!querySnapshot.empty) { showToast(`この部屋の${billData.year}年${billData.month}月分の${translateUtility(billData.utilityType)}請求書は既に入力されています。`, 'warning'); return; } await addDoc(billsRef, { ...billData, enteredAt: serverTimestamp() }); showToast('請求書を登録しました。'); closeModal(billModal); }
+            async init() { const app = initializeApp(firebaseConfig); this.db = getFirestore(app); this.auth = getAuth(app); await setPersistence(this.auth, browserLocalPersistence); return new Promise((resolve, reject) => { onAuthStateChanged(this.auth, async (user) => { if (user) { this.userId = user.uid; userIdDisplay.textContent = `UserID: ${this.userId}`; this.loadData(); resolve(); } else { try { await signInAnonymously(this.auth); } catch (error) { console.error("Authentication failed:", error); reject(error); } } }); }); },
+            loadData() { let roomsData = [], billsData = []; const update = () => renderUI(roomsData, billsData); const roomsQuery = query(collection(this.db, `users/${this.userId}/rooms`)); if (this.unsubscribeRooms) this.unsubscribeRooms(); this.unsubscribeRooms = onSnapshot(roomsQuery, (snapshot) => { roomsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); update(); }); const billsQuery = query(collection(this.db, `users/${this.userId}/bills`)); if (this.unsubscribeBills) this.unsubscribeBills(); this.unsubscribeBills = onSnapshot(billsQuery, (snapshot) => { billsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); update(); }); },
+            async getRoom(id) { const docRef = doc(this.db, `users/${this.userId}/rooms`, id); const docSnap = await getDoc(docRef); return docSnap.exists() ? {id: docSnap.id, ...docSnap.data()} : null; },
+            async saveRoom(roomData) { const collectionRef = collection(this.db, `users/${this.userId}/rooms`); if (roomData.id) { const docRef = doc(collectionRef, roomData.id); await setDoc(docRef, { ...roomData, updatedAt: serverTimestamp() }, { merge: true }); } else { await addDoc(collectionRef, { ...roomData, createdAt: serverTimestamp() }); } },
+            async deleteRoom(roomId) { const batch = writeBatch(this.db); const billsQuery = query(collection(this.db, `users/${this.userId}/bills`), where("roomId", "==", roomId)); const billsSnapshot = await getDocs(billsQuery); billsSnapshot.forEach(doc => batch.delete(doc.ref)); const roomRef = doc(this.db, `users/${this.userId}/rooms`, roomId); batch.delete(roomRef); await batch.commit(); },
+            async getBill(billId) { const docRef = doc(this.db, `users/${this.userId}/bills`, billId); const docSnap = await getDoc(docRef); return docSnap.exists() ? {id: docSnap.id, ...docSnap.data()} : null; },
+            async saveBill(billData) {
+                const billsRef = collection(this.db, `users/${this.userId}/bills`);
+                if (billData.id) { // Update
+                    const docRef = doc(billsRef, billData.id);
+                    const { id, ...dataToUpdate } = billData;
+                    await updateDoc(docRef, dataToUpdate);
+                } else { // Add new
+                    const q = query(billsRef, where("roomId", "==", billData.roomId), where("utilityType", "==", billData.utilityType), where("year", "==", billData.year), where("month", "==", billData.month)); 
+                    const querySnapshot = await getDocs(q); 
+                    if (!querySnapshot.empty) { showToast(`この部屋の${billData.year}/${String(billData.month).padStart(2, '0')}分の${translateUtility(billData.utilityType)}請求書は既に入力されています。`, 'warning'); return; } 
+                    await addDoc(billsRef, { ...billData, enteredAt: serverTimestamp() });
+                }
+                showToast(billData.id ? '請求書を更新しました。' : '請求書を登録しました。');
+                closeModal(document.getElementById('billModal'));
+            }
         };
 
         // --- Event Listeners ---
@@ -279,35 +308,34 @@
             document.querySelectorAll('.add-bill-btn').forEach(btn => btn.addEventListener('click', handleAddBill));
             document.querySelectorAll('.view-history-btn').forEach(btn => btn.addEventListener('click', handleViewBillHistory));
         }
+
+        function attachHistoryModalListeners(container) {
+            container.querySelectorAll('.edit-bill-btn').forEach(btn => btn.addEventListener('click', handleEditBill));
+             container.querySelectorAll('.month-header').forEach(header => {
+                header.addEventListener('click', (e) => {
+                    if (e.target.closest('.edit-bill-btn')) return;
+                    const details = header.nextElementSibling;
+                    const icon = header.querySelector('i');
+                    details.classList.toggle('hidden');
+                    icon.classList.toggle('rotate-180');
+                });
+            });
+        }
         
-        // Xuất ra Excel
         exportExcelBtn.addEventListener('click', () => {
             if (!allRoomsData || allRoomsData.length === 0) {
-                showToast('エクスポートするデータがありません。', 'warning');
-                return;
+                showToast('エクスポートするデータがありません。', 'warning'); return;
             }
-            
-            const dataToExport = [];
-            const roomMap = new Map(allRoomsData.map(room => [room.id, room]));
-
-            allBillsData.forEach(bill => {
-                const room = roomMap.get(bill.roomId);
-                if (room) {
-                    dataToExport.push({
-                        "部屋番号": room.roomNumber,
-                        "使用者名": room.tenantName,
-                        "電話番号": room.phoneNumber,
-                        "請求種別": translateUtility(bill.utilityType),
-                        "対象年月": `${bill.year}/${bill.month}`,
-                        "請求金額": bill.amount,
-                        "電気_お客様番号": room.utilities.electric.customerNumber,
-                        "ガス_お客様番号": room.utilities.gas.customerNumber,
-                        "水道_お客様番号": room.utilities.water.customerNumber,
-                        "ネット_お客様番号": room.utilities.internet.customerNumber,
-                    });
-                }
+            const dataToExport = allBillsData.map(bill => {
+                const room = allRoomsData.find(r => r.id === bill.roomId) || {};
+                return {
+                    "部屋番号": room.roomNumber, "使用者名": room.tenantName, "電話番号": room.phoneNumber, "住所": room.address,
+                    "請求種別": translateUtility(bill.utilityType), "対象年月": `${bill.year}/${String(bill.month).padStart(2,'0')}`, "請求期間": bill.period || '', "請求金額": bill.amount,
+                    "電気_お客様番号": room.utilities?.electric?.customerNumber, "ガス_お客様番号": room.utilities?.gas?.customerNumber,
+                    "水道_お客様番号": room.utilities?.water?.customerNumber, "ネット_お客様番号": room.utilities?.internet?.customerNumber,
+                    "ログインメモ": room.loginNotes
+                };
             });
-
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "光熱費請求");
@@ -315,58 +343,106 @@
             showToast('Excelファイルにエクスポートしました。');
         });
 
-        addRoomBtn.addEventListener('click', () => { roomForm.reset(); document.getElementById('roomId').value = ''; document.getElementById('modalTitle').textContent = '部屋情報の登録'; openModal(roomModal); });
-        roomForm.addEventListener('submit', async (e) => { e.preventDefault(); const id = document.getElementById('roomId').value; const roomData = { roomNumber: document.getElementById('roomNumber').value, tenantName: document.getElementById('tenantName').value, phoneNumber: document.getElementById('phoneNumber').value, loginNotes: document.getElementById('loginNotes').value, utilities: { electric: {}, gas: {}, water: {}, internet: {} } }; if(id) roomData.id = id; ['electric', 'gas', 'water', 'internet'].forEach(type => { roomData.utilities[type] = { customerNumber: document.getElementById(`${type}CustomerNumber`).value, paymentMethod: document.getElementById(`${type}PaymentMethod`).value, startDate: document.getElementById(`${type}StartDate`).value, status: document.getElementById(`${type}Status`).value }; }); await dataService.saveRoom(roomData); showToast(id ? '部屋情報を更新しました。' : '新しい部屋を追加しました。'); closeModal(roomModal); });
-        billForm.addEventListener('submit', async (e) => { e.preventDefault(); const billData = { roomId: document.getElementById('billRoomId').value, utilityType: document.getElementById('billUtilityType').value, year: parseInt(document.getElementById('billMonth').value.split('-')[0]), month: parseInt(document.getElementById('billMonth').value.split('-')[1]), amount: parseInt(document.getElementById('billAmount').value) }; await dataService.addBill(billData); });
-        async function handleEditRoom(e) { const id = e.currentTarget.dataset.id; const data = await dataService.getRoom(id); if (data) { document.getElementById('roomId').value = id; document.getElementById('modalTitle').textContent = '部屋情報の編集'; document.getElementById('roomNumber').value = data.roomNumber; document.getElementById('tenantName').value = data.tenantName; document.getElementById('phoneNumber').value = data.phoneNumber; document.getElementById('loginNotes').value = data.loginNotes || ''; ['electric', 'gas', 'water', 'internet'].forEach(type => { const utility = data.utilities[type] || {}; document.getElementById(`${type}CustomerNumber`).value = utility.customerNumber || ''; document.getElementById(`${type}PaymentMethod`).value = utility.paymentMethod || 'コンビニ決済'; document.getElementById(`${type}StartDate`).value = utility.startDate || ''; document.getElementById(`${type}Status`).value = utility.status || ''; }); openModal(roomModal); } }
-        function handleDeleteRoom(e) { const id = e.currentTarget.dataset.id; const name = e.currentTarget.dataset.name; document.getElementById('confirmDeleteMessage').textContent = `部屋「${name}」を本当に削除しますか？関連する請求書もすべて削除されます。`; openModal(confirmDeleteModal); const confirmBtn = document.getElementById('confirmDelete'); const newConfirmBtn = confirmBtn.cloneNode(true); confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn); newConfirmBtn.addEventListener('click', async () => { await dataService.deleteRoom(id); showToast('部屋を正常に削除しました。'); closeModal(confirmDeleteModal); }); }
-        function handleAddBill(e) { const id = e.currentTarget.dataset.id; const name = e.currentTarget.dataset.name; billForm.reset(); document.getElementById('billRoomId').value = id; document.getElementById('billModalRoomNumber').textContent = name; const lastMonth = new Date(); lastMonth.setMonth(lastMonth.getMonth() - 1); document.getElementById('billMonth').value = lastMonth.toISOString().slice(0, 7); openModal(billModal); }
+        addRoomBtn.addEventListener('click', () => { roomForm.reset(); document.getElementById('roomId').value = ''; document.getElementById('modalTitle').textContent = '部屋情報の登録'; openModal(document.getElementById('roomModal')); });
+        roomForm.addEventListener('submit', async (e) => { e.preventDefault(); const id = document.getElementById('roomId').value; const roomData = { roomNumber: document.getElementById('roomNumber').value, tenantName: document.getElementById('tenantName').value, phoneNumber: document.getElementById('phoneNumber').value, address: document.getElementById('address').value, loginNotes: document.getElementById('loginNotes').value, utilities: { electric: {}, gas: {}, water: {}, internet: {} } }; if(id) roomData.id = id; ['electric', 'gas', 'water', 'internet'].forEach(type => { roomData.utilities[type] = { customerNumber: document.getElementById(`${type}CustomerNumber`).value, paymentMethod: document.getElementById(`${type}PaymentMethod`).value, startDate: document.getElementById(`${type}StartDate`).value, status: document.getElementById(`${type}Status`).value }; }); await dataService.saveRoom(roomData); showToast(id ? '部屋情報を更新しました。' : '新しい部屋を追加しました。'); closeModal(document.getElementById('roomModal')); });
+        billForm.addEventListener('submit', async (e) => { e.preventDefault(); const id = document.getElementById('billId').value; const billData = { roomId: document.getElementById('billRoomId').value, utilityType: document.getElementById('billUtilityType').value, year: parseInt(document.getElementById('billMonth').value.split('-')[0]), month: parseInt(document.getElementById('billMonth').value.split('-')[1]), amount: parseInt(document.getElementById('billAmount').value), period: document.getElementById('billPeriod').value }; if (id) billData.id = id; await dataService.saveBill(billData); });
+        async function handleEditRoom(e) { const id = e.currentTarget.dataset.id; const data = await dataService.getRoom(id); if (data) { document.getElementById('roomId').value = id; document.getElementById('modalTitle').textContent = '部屋情報の編集'; document.getElementById('roomNumber').value = data.roomNumber; document.getElementById('tenantName').value = data.tenantName; document.getElementById('phoneNumber').value = data.phoneNumber; document.getElementById('address').value = data.address || ''; document.getElementById('loginNotes').value = data.loginNotes || ''; ['electric', 'gas', 'water', 'internet'].forEach(type => { const utility = data.utilities[type] || {}; document.getElementById(`${type}CustomerNumber`).value = utility.customerNumber || ''; document.getElementById(`${type}PaymentMethod`).value = utility.paymentMethod || 'コンビニ決済'; document.getElementById(`${type}StartDate`).value = utility.startDate || ''; document.getElementById(`${type}Status`).value = utility.status || ''; }); openModal(document.getElementById('roomModal')); } }
+        function handleDeleteRoom(e) { const id = e.currentTarget.dataset.id; const name = e.currentTarget.dataset.name; document.getElementById('confirmDeleteMessage').textContent = `部屋「${name}」を本当に削除しますか？関連する請求書もすべて削除されます。`; openModal(document.getElementById('confirmDeleteModal')); const confirmBtn = document.getElementById('confirmDelete'); const newConfirmBtn = confirmBtn.cloneNode(true); confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn); newConfirmBtn.addEventListener('click', async () => { await dataService.deleteRoom(id); showToast('部屋を正常に削除しました。'); closeModal(document.getElementById('confirmDeleteModal')); }); }
+        
+        function handleAddBill(e) { const id = e.currentTarget.dataset.id; const name = e.currentTarget.dataset.name; billForm.reset(); document.getElementById('billId').value = ''; document.getElementById('billModalTitle').textContent = '請求書の追加'; document.getElementById('billRoomId').value = id; document.getElementById('billModalRoomNumber').textContent = name; const lastMonth = new Date(); lastMonth.setMonth(lastMonth.getMonth() - 1); document.getElementById('billMonth').value = lastMonth.toISOString().slice(0, 7); openModal(document.getElementById('billModal')); }
+        async function handleEditBill(e) {
+            const billId = e.currentTarget.dataset.billId;
+            const bill = await dataService.getBill(billId);
+            if (bill) {
+                const room = await dataService.getRoom(bill.roomId);
+                closeModal(document.getElementById('billHistoryModal'));
+                document.getElementById('billId').value = bill.id;
+                document.getElementById('billRoomId').value = bill.roomId;
+                document.getElementById('billModalTitle').textContent = '請求書の編集';
+                document.getElementById('billModalRoomNumber').textContent = room?.roomNumber || 'N/A';
+                document.getElementById('billUtilityType').value = bill.utilityType;
+                document.getElementById('billMonth').value = `${bill.year}-${String(bill.month).padStart(2, '0')}`;
+                document.getElementById('billAmount').value = bill.amount;
+                document.getElementById('billPeriod').value = bill.period || '';
+                openModal(document.getElementById('billModal'));
+            } else {
+                showToast('請求書データが見つかりません。', 'error');
+            }
+        }
         
         function handleViewBillHistory(e) {
             const roomId = e.currentTarget.dataset.id;
             const roomName = e.currentTarget.dataset.name;
-            const billsForRoom = allBillsData
-                .filter(bill => bill.roomId === roomId)
-                .sort((a, b) => (b.year * 100 + b.month) - (a.year * 100 + a.month));
-            
-            const tableBody = document.getElementById('billHistoryTableBody');
-            tableBody.innerHTML = '';
+            const billsForRoom = allBillsData.filter(bill => bill.roomId === roomId);
+            const groupedBills = new Map();
+            billsForRoom.forEach(bill => {
+                const monthKey = `${bill.year}-${String(bill.month).padStart(2, '0')}`;
+                if (!groupedBills.has(monthKey)) groupedBills.set(monthKey, { total: 0, details: [] });
+                const monthData = groupedBills.get(monthKey);
+                monthData.total += bill.amount;
+                monthData.details.push({ id: bill.id, utilityType: bill.utilityType, amount: bill.amount, period: bill.period });
+            });
+            const container = document.getElementById('billHistoryContainer');
+            container.innerHTML = '';
             document.getElementById('billHistoryModalTitle').textContent = `請求履歴 (${roomName})`;
-
-            if (billsForRoom.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="3" class="text-center text-gray-500 py-4">この部屋には請求履歴がありません。</td></tr>`;
+            if (groupedBills.size === 0) {
+                container.innerHTML = `<p class="text-center text-gray-500 py-4">この部屋には請求履歴がありません。</p>`;
             } else {
-                billsForRoom.forEach(bill => {
-                    const row = `
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">${bill.year}年 ${bill.month}月</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${translateUtility(bill.utilityType)}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${bill.amount.toLocaleString()} 円</td>
-                        </tr>
+                const sortedMonths = Array.from(groupedBills.keys()).sort().reverse();
+                sortedMonths.forEach(monthKey => {
+                    const monthData = groupedBills.get(monthKey);
+                    const [year, month] = monthKey.split('-');
+                    const monthHtml = `
+                         <div class="bg-gray-50 rounded-lg shadow-sm">
+                            <div class="month-header flex justify-between items-center font-bold p-3 cursor-pointer">
+                                <p class="text-base text-gray-800">${year}/${parseInt(month, 10)}</p>
+                                <div class="flex items-center">
+                                    <p class="text-base text-blue-600 mr-4">合計: ${monthData.total.toLocaleString()} 円</p>
+                                    <i class="fas fa-chevron-down transition-transform"></i>
+                                </div>
+                            </div>
+                            <ul class="month-details p-3 pt-0 hidden border-t border-gray-200">
+                                ${monthData.details.map(detail => `
+                                    <li class="flex justify-between items-start text-xs py-2">
+                                        <div>
+                                            <div class="flex items-center">
+                                                <span class="text-gray-600">${translateUtility(detail.utilityType)}:</span>
+                                                <span class="font-medium ml-2">${detail.amount.toLocaleString()} 円</span>
+                                            </div>
+                                            ${detail.period ? `<p class="text-gray-400 text-xs mt-1 ml-1">期間: ${detail.period}</p>` : ''}
+                                        </div>
+                                        <button data-bill-id="${detail.id}" class="edit-bill-btn text-blue-600 hover:text-blue-800 font-semibold py-1 px-2 rounded-md self-center">編集</button>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
                     `;
-                    tableBody.innerHTML += row;
+                    container.innerHTML += monthHtml;
                 });
             }
-            openModal(billHistoryModal);
+            attachHistoryModalListeners(container);
+            openModal(document.getElementById('billHistoryModal'));
         }
 
-        document.getElementById('cancelRoomModal').addEventListener('click', () => closeModal(roomModal));
-        document.getElementById('cancelBillModal').addEventListener('click', () => closeModal(billModal));
-        document.getElementById('cancelDelete').addEventListener('click', () => closeModal(confirmDeleteModal));
-        document.getElementById('closeBillHistoryModal').addEventListener('click', () => closeModal(billHistoryModal));
+        document.getElementById('cancelRoomModal').addEventListener('click', () => closeModal(document.getElementById('roomModal')));
+        document.getElementById('cancelBillModal').addEventListener('click', () => closeModal(document.getElementById('billModal')));
+        document.getElementById('cancelDelete').addEventListener('click', () => closeModal(document.getElementById('confirmDeleteModal')));
+        document.getElementById('closeBillHistoryModal').addEventListener('click', () => closeModal(document.getElementById('billHistoryModal')));
 
         // --- Hàm khởi tạo chính ---
         async function main() {
-            dataService = localStorageService;
             if (firebaseConfig && firebaseConfig.apiKey) {
                 try {
-                    await firestoreService.init();
-                    dataService = firestoreService; 
+                    dataService = firestoreService;
+                    await dataService.init();
+                    showToast('オンラインモードで接続しました。', 'success');
                 } catch (e) {
                     console.warn("Could not initialize Firestore, falling back to LocalStorage.", e.message);
+                    dataService = localStorageService;
                     await dataService.init();
                 }
             } else {
+                 dataService = localStorageService;
                  await dataService.init();
             }
             authReady = true;
