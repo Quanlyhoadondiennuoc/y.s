@@ -13,7 +13,7 @@
         body {
             font-family: 'Noto Sans JP', 'Inter', sans-serif;
             background-color: #f0f2f5;
-            font-size: 14px; /* Giảm cỡ chữ cơ bản */
+            font-size: 14px;
         }
         /* Custom scrollbar */
         ::-webkit-scrollbar { width: 8px; }
@@ -78,7 +78,7 @@
                  <button id="closeBillHistoryModal" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
              </div>
              <div id="billHistoryContainer" class="max-h-[60vh] overflow-y-auto space-y-2 p-1">
-                 </div>
+             </div>
         </div>
     </div>
     
@@ -97,11 +97,9 @@
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // --- CẤU HÌNH FIREBASE (QUAN TRỌNG) ---
-        // Đã dán cấu hình của bạn vào đây.
         const firebaseConfig = {
           apiKey: "AIzaSyDFfsZmlXD87LE37In1iUA0rezWfHa2Bgo",
           authDomain: "quan-ly-hoa-don-dien-nuoc.firebaseapp.com",
-          // FIX: Bổ sung lại databaseURL bị thiếu
           databaseURL: "https://quan-ly-hoa-don-dien-nuoc-default-rtdb.asia-southeast1.firebasedatabase.app",
           projectId: "quan-ly-hoa-don-dien-nuoc",
           storageBucket: "quan-ly-hoa-don-dien-nuoc.firebasestorage.app",
@@ -254,7 +252,6 @@
             async saveRoom(roomData) { let rooms = this._getRooms(); if (roomData.id) { rooms = rooms.map(r => r.id === roomData.id ? { ...r, ...roomData } : r); } else { roomData.id = `local_${Date.now()}`; rooms.push(roomData); } this._saveRooms(rooms); this.loadData(); },
             async deleteRoom(roomId) { let rooms = this._getRooms().filter(r => r.id !== roomId); let bills = this._getBills().filter(b => b.roomId !== roomId); this._saveRooms(rooms); this._saveBills(bills); this.loadData(); },
             async getBill(billId) { return this._getBills().find(b => b.id === billId); },
-            // ================= TÁI CẤU TRÚC LOGIC =================
             async saveBill(billData) {
                 let bills = this._getBills();
                 if (billData.id) { // Update
@@ -263,14 +260,14 @@
                     const hasDuplicate = bills.some(b => b.roomId === billData.roomId && b.utilityType === billData.utilityType && b.year === billData.year && b.month === billData.month);
                     if (hasDuplicate) {
                         showToast(`この部屋の${billData.year}/${String(billData.month).padStart(2, '0')}分の${translateUtility(billData.utilityType)}請求書は既に入力されています。`, 'warning');
-                        return false; // Trả về false nếu thất bại
+                        return false; 
                     }
                     billData.id = `local_bill_${Date.now()}`;
                     bills.push(billData);
                 }
                 this._saveBills(bills);
-                this.loadData(); // Cập nhật lại UI
-                return true; // Trả về true nếu thành công
+                this.loadData();
+                return true;
             }
         };
         const firestoreService = {
@@ -281,7 +278,6 @@
             async saveRoom(roomData) { const collectionRef = collection(this.db, `users/${this.userId}/rooms`); if (roomData.id) { const docRef = doc(collectionRef, roomData.id); await setDoc(docRef, { ...roomData, updatedAt: serverTimestamp() }, { merge: true }); } else { await addDoc(collectionRef, { ...roomData, createdAt: serverTimestamp() }); } },
             async deleteRoom(roomId) { const batch = writeBatch(this.db); const billsQuery = query(collection(this.db, `users/${this.userId}/bills`), where("roomId", "==", roomId)); const billsSnapshot = await getDocs(billsQuery); billsSnapshot.forEach(doc => batch.delete(doc.ref)); const roomRef = doc(this.db, `users/${this.userId}/rooms`, roomId); batch.delete(roomRef); await batch.commit(); },
             async getBill(billId) { const docRef = doc(this.db, `users/${this.userId}/bills`, billId); const docSnap = await getDoc(docRef); return docSnap.exists() ? {id: docSnap.id, ...docSnap.data()} : null; },
-            // ================= TÁI CẤU TRÚC LOGIC =================
             async saveBill(billData) {
                 const billsRef = collection(this.db, `users/${this.userId}/bills`);
                 if (billData.id) { // Update
@@ -293,11 +289,11 @@
                     const querySnapshot = await getDocs(q); 
                     if (!querySnapshot.empty) { 
                         showToast(`この部屋の${billData.year}/${String(billData.month).padStart(2, '0')}分の${translateUtility(billData.utilityType)}請求書は既に入力されています。`, 'warning'); 
-                        return false; // Trả về false nếu thất bại
+                        return false;
                     } 
                     await addDoc(billsRef, { ...billData, enteredAt: serverTimestamp() });
                 }
-                return true; // Trả về true nếu thành công
+                return true;
             }
         };
 
@@ -363,21 +359,39 @@
             closeModal(document.getElementById('roomModal')); 
         });
 
-        // ================= TÁI CẤU TRÚC LOGIC =================
+        // ================= SỬA LỖI TRIỆT ĐỂ =================
         billForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('billId').value;
+            
+            // --- VALIDATION START ---
+            const amountInput = document.getElementById('billAmount');
+            const amountValue = parseInt(amountInput.value, 10);
+
+            if (isNaN(amountValue) || amountValue < 0) {
+                showToast('有効な請求金額を入力してください。', 'error');
+                amountInput.focus();
+                return;
+            }
+
+            const monthInput = document.getElementById('billMonth');
+            if (!monthInput.value) {
+                showToast('対象年月を選択してください。', 'error');
+                monthInput.focus();
+                return;
+            }
+            // --- VALIDATION END ---
+
             const billData = {
                 roomId: document.getElementById('billRoomId').value,
                 utilityType: document.getElementById('billUtilityType').value,
-                year: parseInt(document.getElementById('billMonth').value.split('-')[0]),
-                month: parseInt(document.getElementById('billMonth').value.split('-')[1]),
-                amount: parseInt(document.getElementById('billAmount').value),
+                year: parseInt(monthInput.value.split('-')[0]),
+                month: parseInt(monthInput.value.split('-')[1]),
+                amount: amountValue, // Dùng giá trị đã được kiểm tra
                 period: document.getElementById('billPeriod').value
             };
             if (id) billData.id = id;
 
-            // Service chỉ trả về true/false, listener sẽ xử lý UI
             const success = await dataService.saveBill(billData);
 
             if (success) {
